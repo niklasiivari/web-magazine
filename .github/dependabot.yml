@@ -1,0 +1,30 @@
+# Dependabot keeps the lockfile, the actions and the base images current, and
+# — with Dependabot alerts enabled in the repository's security settings —
+# opens a PR when an advisory lands against a dependency of code that has not
+# changed in months. That is the case CI cannot catch on its own: CI only runs
+# when someone pushes.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      images:
+        patterns: ["*"]

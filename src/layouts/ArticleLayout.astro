@@ -1,0 +1,39 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import { site } from "../lib/site";
+import Layout from "./Layout.astro";
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  author?: string;
+  cover?: ImageMetadata;
+  issueTitle?: string;
+  issueHref?: string;
+}
+
+const { title, subtitle, author, cover, issueTitle, issueHref } = Astro.props;
+---
+
+<Layout title={`${site.name} | ${title}`} description={subtitle} image={cover?.src}>
+  <article class="article">
+    {cover && <Image class="article-cover" src={cover} alt="" width={1600} />}
+    <header class="article-header">
+      {
+        issueHref && (
+          <a class="kicker" href={issueHref}>
+            ← {issueTitle ?? "Back to issue"}
+          </a>
+        )
+      }
+      <h1>{title}</h1>
+      {subtitle && <p class="subtitle">{subtitle}</p>}
+      {author && <p class="byline">{author}</p>}
+    </header>
+
+    <div class="prose">
+      <slot />
+    </div>
+  </article>
+</Layout>

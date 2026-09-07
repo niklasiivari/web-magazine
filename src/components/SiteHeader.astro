@@ -1,0 +1,22 @@
+---
+import { site } from "../lib/site";
+
+const { pathname } = Astro.props as { pathname: string };
+const isHome = pathname === "/";
+---
+
+<header class="site-header">
+  <div class="site-header-inner">
+    {
+      isHome ? (
+        <p class="site-title">
+          {site.name}
+        </p>
+      ) : (
+        <a class="site-title" href="/" aria-label={site.name}>
+          {site.name}
+        </a>
+      )
+    }
+  </div>
+</header>
