@@ -1,0 +1,312 @@
+---
+import { Image } from "astro:assets";
+import { getCollection, render } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import { articleSlug } from "../../lib/content";
+import { readerLanguageNames, site, defaultText as t } from "../../lib/site";
+
+export async function getStaticPaths() {
+  const issues = await getCollection("issues", ({ data }) => !data.isDraft);
+  return issues.map((issue) => ({ params: { issue: issue.id }, props: { issue } }));
+}
+
+const { issue } = Astro.props;
+const articleEntries = (
+  await getCollection("articles", ({ data }) => data.issue.id === issue.id && !data.isDraft)
+).sort((a, b) => a.data.order - b.data.order);
+
+const articles = await Promise.all(
+  articleEntries.map(async (entry) => ({
+    entry,
+    slug: articleSlug(entry.id),
+    Content: (await render(entry)).Content,
+  })),
+);
+const creditsEntry = (
+  await getCollection("credits", ({ data }) => data.issue.id === issue.id && !data.isDraft)
+)[0];
+const Credits = creditsEntry ? (await render(creditsEntry)).Content : null;
+---
+
+<Layout title={`${site.name} | ${issue.data.title}`} noindex>
+  <div class="reader" data-publication={site.name} data-issue={issue.data.title}>
+    <div class="reader-viewport">
+      <!-- Hidden source used for pagination. -->
+      <div class="reader-master" aria-hidden="true">
+        {
+          issue.data.cover && (
+            <section class="reader-page reader-cover-page">
+              <Image
+                src={issue.data.cover}
+                alt=""
+                class="reader-cover-image"
+                width={1600}
+                loading="eager"
+                decoding="async"
+              />
+            </section>
+          )
+        }
+
+        <section class="reader-page reader-toc-page">
+          <header class="reader-toc-header">
+            <div class="toc-top-row">
+              <a href="/" class="toc-back-link" data-reader-i18n="allIssues">{t("allIssues")}</a>
+              <span class="toc-issue-badge">{issue.data.title}</span>
+            </div>
+            <h1 class="toc-main-title" data-reader-i18n="contents">{t("contents")}</h1>
+          </header>
+          <ol class="toc">
+            {
+              articles.map(({ entry, slug }, i) => (
+                <li class="toc-item">
+                  <a href={`#${slug}`} data-reader-jump={slug} class="toc-entry">
+                    <span class="toc-num">{String(i + 1).padStart(2, "0")}</span>
+                    <div class="toc-content">
+                      <div class="toc-title-row">
+                        <span class="toc-title">{entry.data.title}</span>
+                        <span class="toc-arrow" aria-hidden="true">→</span>
+                      </div>
+                      {entry.data.subtitle && <span class="toc-subtitle">{entry.data.subtitle}</span>}
+                      {entry.data.author && (
+                        <span class="toc-author">
+                          <span class="toc-author-bullet" aria-hidden="true">—</span>
+                          {entry.data.author}
+                        </span>
+                      )}
+                    </div>
+                  </a>
+                </li>
+              ))
+            }
+            {
+              creditsEntry && (
+                <li class="toc-item toc-credits-item">
+                  <a href="#credits" data-reader-jump="credits" class="toc-entry">
+                    <span class="toc-num" aria-hidden="true">—</span>
+                    <div class="toc-content">
+                      <div class="toc-title-row">
+                        <span class="toc-title">{creditsEntry.data.title}</span>
+                        <span class="toc-arrow" aria-hidden="true">→</span>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+              )
+            }
+          </ol>
+        </section>
+
+        {
+          articles.map(({ entry, slug, Content }) => (
+            <section class="reader-page reader-article" id={slug}>
+              <header class="reader-article-header">
+                <h2>{entry.data.title}</h2>
+                {entry.data.subtitle && <p class="subtitle">{entry.data.subtitle}</p>}
+                {entry.data.author && <p class="byline">{entry.data.author}</p>}
+              </header>
+              <div class="prose">
+                <Content />
+              </div>
+            </section>
+          ))
+        }
+        {
+          creditsEntry && Credits && (
+            <section class="reader-page reader-article reader-credits-page" id="credits">
+              <header class="reader-article-header reader-credits-header">
+                <p class="reader-credits-kicker">{site.name} · {issue.data.title}</p>
+                <h2>{creditsEntry.data.title}</h2>
+              </header>
+              <div class="prose reader-credits-prose">
+                <Credits />
+              </div>
+            </section>
+          )
+        }
+      </div>
+
+      <!-- Built by reader.ts from .reader-master — the actual horizontally-paged filmstrip. -->
+      <div class="reader-track"></div>
+    </div>
+
+    <div
+      class="reader-progress-track"
+      role="progressbar"
+      aria-label={t("readingProgress")}
+      data-reader-i18n-aria-label="readingProgress"
+      aria-valuemin="1"
+      tabindex="0"
+    >
+      <div class="reader-progress-bar"></div>
+    </div>
+
+    <nav class="reader-toolbar" aria-label={t("navigation")} data-reader-i18n-aria-label="navigation">
+      <div class="reader-toolbar-shortcuts">
+        <a
+          href="/"
+          class="reader-archive-link"
+          aria-label={t("allIssuesLabel")}
+          title={t("allIssuesLabel")}
+          data-reader-i18n-aria-label="allIssuesLabel"
+          data-reader-i18n-title="allIssuesLabel"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M3 11.5 12 4l9 7.5M5.5 10v10h13V10M9.5 20v-6h5v6"></path>
+          </svg>
+        </a>
+        <button
+          class="reader-toc-button"
+          type="button"
+          title={t("backToContents")}
+          data-reader-i18n-title="backToContents"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M8 6h13M8 12h13M8 18h13"></path>
+            <circle cx="3.5" cy="6" r="1"></circle>
+            <circle cx="3.5" cy="12" r="1"></circle>
+            <circle cx="3.5" cy="18" r="1"></circle>
+          </svg>
+          <span data-reader-i18n="contents">{t("contents")}</span>
+        </button>
+      </div>
+      <div class="reader-nav-controls">
+        <button class="reader-nav reader-nav-prev" type="button" aria-label={t("previousPage")}>
+          <span aria-hidden="true">←</span><span class="reader-nav-label" data-reader-i18n="previous">{t("previous")}</span>
+        </button>
+        <p class="reader-counter" aria-live="polite" />
+        <button class="reader-nav reader-nav-next" type="button" aria-label={t("nextPage")}>
+          <span class="reader-nav-label" data-reader-i18n="next">{t("next")}</span><span aria-hidden="true">→</span>
+        </button>
+      </div>
+      <div class="reader-toolbar-settings">
+        <div class="reader-toolbar-settings-inline">
+          <div class="reader-view-switch" role="group" aria-label={t("viewMode")} data-reader-i18n-aria-label="viewMode">
+            <span class="reader-view-label" aria-hidden="true" data-reader-i18n="view">{t("view")}</span>
+            <button
+              class="reader-view-option"
+              type="button"
+              data-reader-view="articles"
+              aria-pressed="true"
+              data-reader-i18n="articles"
+            >
+              {t("articles")}
+            </button>
+            <button class="reader-view-option" type="button" data-reader-view="pages" aria-pressed="false" data-reader-i18n="pages">
+              {t("pages")}
+            </button>
+          </div>
+          <div class="reader-language-switch" role="group" aria-label={t("language")} data-reader-i18n-aria-label="language">
+            {
+              site.reader.languages.map((language) => (
+                <button
+                  class="reader-language-option"
+                  type="button"
+                  data-reader-language={language}
+                  aria-pressed={language === site.reader.defaultLanguage}
+                >
+                  {language.toUpperCase()}
+                </button>
+              ))
+            }
+          </div>
+        </div>
+        <button
+          class="reader-settings-toggle"
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-label={t("settings")}
+          title={t("settings")}
+          data-reader-i18n-aria-label="settings"
+          data-reader-i18n-title="settings"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M4 6h16M4 12h16M4 18h16"></path>
+            <circle cx="8" cy="6" r="2.2"></circle>
+            <circle cx="16" cy="12" r="2.2"></circle>
+            <circle cx="10" cy="18" r="2.2"></circle>
+          </svg>
+        </button>
+      </div>
+    </nav>
+
+    <div
+      class="reader-settings-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("settings")}
+      data-reader-i18n-aria-label="settings"
+      hidden
+    >
+      <div class="reader-settings-backdrop" aria-hidden="true"></div>
+      <div class="reader-settings-panel">
+        <div class="reader-settings-header">
+          <h3 class="reader-settings-title" data-reader-i18n="settings">{t("settings")}</h3>
+          <button
+            class="reader-settings-close"
+            type="button"
+            aria-label={t("close")}
+            data-reader-i18n-aria-label="close"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="reader-settings-section">
+          <span class="reader-settings-section-title" data-reader-i18n="viewMode">{t("viewMode")}</span>
+          <div class="reader-view-switch" role="group" aria-label={t("viewMode")} data-reader-i18n-aria-label="viewMode">
+            <button
+              class="reader-view-option"
+              type="button"
+              data-reader-view="articles"
+              aria-pressed="true"
+              data-reader-i18n="articles"
+            >
+              {t("articles")}
+            </button>
+            <button
+              class="reader-view-option"
+              type="button"
+              data-reader-view="pages"
+              aria-pressed="false"
+              data-reader-i18n="pages"
+            >
+              {t("pages")}
+            </button>
+          </div>
+        </div>
+        <div class="reader-settings-section">
+          <span class="reader-settings-section-title" data-reader-i18n="language">{t("language")}</span>
+          <div class="reader-language-switch" role="group" aria-label={t("language")} data-reader-i18n-aria-label="language">
+            {
+              site.reader.languages.map((language) => (
+                <button
+                  class="reader-language-option"
+                  type="button"
+                  data-reader-language={language}
+                  aria-pressed={language === site.reader.defaultLanguage}
+                >
+                  {readerLanguageNames[language]} ({language.toUpperCase()})
+                </button>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { waitForReaderImages } from "../../lib/typesetter";
+  import initReader from "../../scripts/reader";
+
+  const reader = document.querySelector(".reader");
+
+  if (reader) await waitForReaderImages(reader);
+  await document.fonts.ready;
+
+  initReader();
+</script>
