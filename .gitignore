@@ -1,0 +1,30 @@
+node_modules/
+dist/
+.astro/
+
+.DS_Store
+Thumbs.db
+
+.env
+.env.*
+!.env.example
+
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# compiled server binary (local `go build`)
+/server
+
+# playwright
+test-results/
+playwright-report/
+.playwright/
+
+.claude/

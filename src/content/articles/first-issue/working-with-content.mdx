@@ -1,0 +1,38 @@
+---
+title: Content structure
+subtitle: Frontmatter and file layout.
+author: Example author
+issue: first-issue
+order: 2
+---
+
+import EventSchedule from "../../../components/blocks/EventSchedule.astro";
+
+Article frontmatter references an issue. `order` controls the table of contents
+and reading sequence. The same file can include paragraphs, headings, lists,
+tables, links, figures, quotations, code blocks, thematic breaks, and footnotes.
+
+Place local images beside the Markdown file. Astro processes them during the
+build.
+
+## Event schedules
+
+Use MDX when an article requires a component.
+
+<EventSchedule
+  sections={[
+    {
+      title: "September",
+      events: [
+        { date: "12 Sep", name: "Opening event" },
+        { date: "26 Sep", name: "Editorial meeting", translation: "Open to contributors" },
+      ],
+      note: "Sample schedule data.",
+    },
+  ]}
+/>
+
+## Deployment model
+
+The template is a static site. It has no publishing service, account system,
+analytics provider, or deployment configuration.
