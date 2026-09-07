@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@biomejs/biome": "2.5.11",
+    "@biomejs/biome": "2.5.12",
     "astro-compress": "^2.4.3",
     "@playwright/test": "^1.54.0",
     "typescript": "^6.0.3"
