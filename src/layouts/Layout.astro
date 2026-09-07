@@ -1,0 +1,63 @@
+---
+import cormorant300Url from "@fontsource/cormorant-garamond/files/cormorant-garamond-latin-300-normal.woff2?url";
+import cormorant400ItalicUrl from "@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-italic.woff2?url";
+import cormorant400Url from "@fontsource/cormorant-garamond/files/cormorant-garamond-latin-400-normal.woff2?url";
+import cormorant600ItalicUrl from "@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-italic.woff2?url";
+import sourceSerif400Url from "@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2?url";
+import SiteHeader from "../components/SiteHeader.astro";
+import { site } from "../lib/site";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
+}
+
+const { title = site.name, description = site.description, image, noindex = false } = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const pathname = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang={site.locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f9f6f0" />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={canonicalURL} />
+
+    <link rel="preload" href={cormorant300Url} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={cormorant400Url} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={cormorant400ItalicUrl} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={cormorant600ItalicUrl} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={sourceSerif400Url} as="font" type="font/woff2" crossorigin />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <title>{title}</title>
+
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    {image && <meta property="og:image" content={new URL(image, Astro.site)} />}
+    <meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <SiteHeader pathname={pathname} />
+    <main id="main">
+      <slot />
+    </main>
+  </body>
+</html>

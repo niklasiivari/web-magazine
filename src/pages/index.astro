@@ -1,0 +1,31 @@
+---
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+import Layout from "../layouts/Layout.astro";
+import { site } from "../lib/site";
+
+const dateFormatter = new Intl.DateTimeFormat(site.locale, { year: "numeric", month: "long" });
+
+const issues = (await getCollection("issues", ({ data }) => !data.isDraft)).sort(
+  (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf(),
+);
+---
+
+<Layout>
+  <h1 class="visually-hidden">{site.name} issues</h1>
+  <ul class="issue-grid">
+    {
+      issues.map((issue) => (
+        <li>
+          <a class="issue-card" href={`/${issue.id}`}>
+            <span class="issue-card-cover">
+              {issue.data.cover && <Image src={issue.data.cover} alt="" width={640} />}
+            </span>
+            <span class="issue-card-title">{issue.data.title}</span>
+            <span class="issue-card-date">{dateFormatter.format(issue.data.publishDate)}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>

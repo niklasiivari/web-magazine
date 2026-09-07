@@ -1,0 +1,130 @@
+name: Check
+
+# Pushes to main and every pull request. `push` is scoped to main so a PR
+# branch is not checked twice for the same commit.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Installs pnpm, installs Node through it, and runs the install. The
+      # pnpm version is read from package.json's `packageManager`, so there is
+      # no second pin here for Dependabot to leave behind. The Node major is
+      # pinned deliberately rather than read from `engines`: it matches the
+      # Dockerfile's runtime image, so CI builds on what production runs.
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+          require-lockfile: true
+      - run: pnpm check
+      - run: pnpm build
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+          require-lockfile: true
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # go.mod's `go` directive is the language-version floor, and the only
+      # Go pin CI needs. The Dockerfile's `FROM golang:` is a separate,
+      # deliberately newer toolchain pin that Dependabot bumps on its own.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          # No third-party dependencies, so there is nothing to cache.
+          cache: false
+      # The container build already fails on a Go syntax error; these catch
+      # formatting drift and the suspicious-construct class of bug that still
+      # compiles cleanly.
+      - run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "${unformatted}" ]; then
+            echo "not gofmt-clean:" >&2
+            echo "${unformatted}" >&2
+            gofmt -d . >&2
+            exit 1
+          fi
+      - run: go vet ./...
+      # The server is stdlib-only, so this is really a watch on Go's own
+      # standard library — net/http included — for advisories that land
+      # without anything in the repo changing.
+      - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+          require-lockfile: true
+      # Blocking. These are the packages that shape the published build, so
+      # an advisory here is one that can reach a reader.
+      - run: pnpm audit --audit-level=high --prod
+      # Advisory. The dev tree is local tooling — a type checker and a build
+      # plugin — that never ships, and it is routinely a few advisories deep
+      # through transitive dependencies nobody here can patch. Reported so it
+      # is visible, not blocking so it cannot wedge the template.
+      - run: pnpm audit --audit-level=high
+        continue-on-error: true
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build --build-arg SITE_URL=https://magazine.example --tag web-magazine-template .
+      # Building the image proves it compiles; this proves it serves. The
+      # routing in server.go — clean URLs, the styled 404 fallback, the
+      # security headers — is not covered by any other job, and a `scratch`
+      # image is exactly where a missing file surfaces only at runtime.
+      - name: Smoke test the image
+        run: |
+          set -euo pipefail
+          docker run -d --name smoke -p 8080:8080 web-magazine-template
+          for _ in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:8080/; then break; fi
+            sleep 1
+          done
+
+          echo "--- index is served"
+          curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
+
+          echo "--- unknown path returns the styled 404, not bare text"
+          status=$(curl -sS -o /tmp/404.html -w '%{http_code}' http://127.0.0.1:8080/no-such-page)
+          [ "$status" = "404" ] || { echo "expected 404, got $status" >&2; exit 1; }
+          grep -qi '<html' /tmp/404.html || { echo "404 body is not the styled page" >&2; cat /tmp/404.html >&2; exit 1; }
+
+          echo "--- security headers are present"
+          headers=$(curl -sSI http://127.0.0.1:8080/)
+          for header in X-Content-Type-Options X-Frame-Options Referrer-Policy; do
+            grep -qi "^${header}:" <<<"$headers" || { echo "missing ${header}" >&2; echo "$headers" >&2; exit 1; }
+          done
+
+          echo "--- the container's own healthcheck flag agrees"
+          docker exec smoke /app/server -healthcheck
+      - if: always()
+        run: docker rm -f smoke 2>/dev/null || true

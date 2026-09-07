@@ -1,0 +1,42 @@
+# Dependabot keeps the lockfile, the actions and the base images current, and
+# — with Dependabot alerts enabled in the repository's security settings —
+# opens a PR when an advisory lands against a dependency of code that has not
+# changed in months. That is the case CI cannot catch on its own: CI only runs
+# when someone pushes.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns: ["*"]
+
+  # Finds nothing today — server.go is stdlib-only, so go.mod has no `require`
+  # block — but it means a Go dependency added later is covered without anyone
+  # remembering to come back here. The Go toolchain itself is bumped through
+  # the Dockerfile's `FROM golang:` under the docker ecosystem below.
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      go:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      images:
+        patterns: ["*"]
