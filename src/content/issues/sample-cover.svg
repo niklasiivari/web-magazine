@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1654 2339" role="img" aria-labelledby="title description">
+  <title id="title">First Issue sample cover</title>
+  <desc id="description">Abstract cover image for the magazine template.</desc>
+  <g transform="scale(1.378333 1.392262)">
+    <rect width="1200" height="1680" fill="#1c2b3d"/>
+    <circle cx="875" cy="540" r="340" fill="#c9aa6b"/>
+    <path d="M-70 1360 520 500l750 1030Z" fill="#f9f6f0"/>
+    <text x="110" y="180" fill="#f9f6f0" font-family="serif" font-size="90">MAGAZINE</text>
+    <text x="110" y="1540" fill="#f9f6f0" font-family="serif" font-size="64">FIRST ISSUE</text>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title description">
+  <title id="title">Sample figure</title>
+  <desc id="description">Abstract shapes used to demonstrate Markdown figures.</desc>
+  <rect width="1200" height="675" fill="#1c2b3d"/>
+  <circle cx="300" cy="340" r="180" fill="#c9aa6b"/>
+  <path d="M530 490 760 150l250 340Z" fill="#f9f6f0"/>
+  <rect x="820" y="220" width="220" height="220" rx="110" fill="#442d17"/>
+</svg>

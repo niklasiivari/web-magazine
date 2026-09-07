@@ -1,0 +1,25 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { site, defaultText as t } from "../lib/site";
+---
+
+<Layout title={`${site.name} | ${t("notFound")}`} noindex>
+  <div class="not-found">
+    <p class="kicker">404</p>
+    <h1>{t("notFound")}</h1>
+    <p><a href="/">{t("backToHome")}</a></p>
+  </div>
+</Layout>
+
+<style>
+  .not-found {
+    max-width: var(--measure);
+    margin: 3rem auto;
+    text-align: center;
+  }
+
+  .not-found h1 {
+    font-family: var(--serif);
+    margin: 0 0 1rem;
+  }
+</style>
