@@ -1,4 +1,4 @@
-FROM node:24-alpine3.22 AS astro_builder
+FROM node:26-alpine3.22 AS astro_builder
 WORKDIR /app
 
 ARG SITE_URL=https://example.com
