@@ -1,0 +1,103 @@
+---
+interface EventRow {
+  date: string;
+  name: string;
+  translation?: string;
+}
+
+interface EventSection {
+  title: string;
+  events: EventRow[];
+  note?: string;
+}
+
+interface Props {
+  sections: EventSection[];
+}
+
+const { sections } = Astro.props;
+---
+
+{sections.map((section) => (
+  <Fragment>
+    <h2 class="event-section-heading">{section.title}</h2>
+    <ul class="event-list">
+      {section.events.map((event) => (
+        <li class="event-item">
+          <time class="event-date">{event.date}</time>
+          <span class="event-name">
+            {event.name}
+            {event.translation && <span class="event-translation"> / {event.translation}</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+    {section.note && <p class="event-note">{section.note}</p>}
+  </Fragment>
+))}
+
+<style>
+  .event-section-heading {
+    margin: 1.35em 0 0.4em;
+    border-top: 1px solid var(--rule);
+    padding-top: 0.7em;
+  }
+
+  .event-section-heading:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .event-list {
+    display: grid;
+    gap: 0;
+    margin: 0 0 1.15em;
+    padding: 0;
+    list-style: none;
+  }
+
+  .event-item {
+    display: grid;
+    grid-template-columns: minmax(4.75rem, 6.25rem) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: baseline;
+    margin: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--rule) 65%, transparent);
+    padding: 0.48rem 0;
+    text-align: left;
+    hyphens: none;
+  }
+
+  .event-item:first-child {
+    border-top: 1px solid color-mix(in srgb, var(--rule) 65%, transparent);
+  }
+
+  .event-date {
+    font-family: var(--display);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: var(--gold);
+  }
+
+  .event-name {
+    min-width: 0;
+    font-family: var(--serif);
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  .event-translation {
+    color: var(--ink-muted);
+  }
+
+  .event-note {
+    margin: -0.55em 0 1.2em;
+    color: var(--ink-muted);
+    font-family: var(--display);
+    font-size: 0.92rem;
+    font-style: italic;
+    text-align: left;
+  }
+</style>

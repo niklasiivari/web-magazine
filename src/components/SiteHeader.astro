@@ -1,0 +1,33 @@
+---
+import { site } from "../lib/site";
+
+const logos = import.meta.glob<string>("../assets/logo.svg", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
+const logoMarkup = Object.values(logos)[0];
+
+const { pathname } = Astro.props as { pathname: string };
+const isHome = pathname === "/";
+---
+
+<header class="site-header">
+  <div class="site-header-inner">
+    {
+      isHome ? (
+        <p class="site-title">
+          {logoMarkup ? (
+            <span class="site-logo" role="img" aria-label={site.name} set:html={logoMarkup} />
+          ) : (
+            site.name
+          )}
+        </p>
+      ) : (
+        <a class="site-title" href="/" aria-label={site.name}>
+          {logoMarkup ? <span class="site-logo" set:html={logoMarkup} /> : site.name}
+        </a>
+      )
+    }
+  </div>
+</header>

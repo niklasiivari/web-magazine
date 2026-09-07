@@ -1,0 +1,32 @@
+---
+import { getCollection, getEntry, render } from "astro:content";
+import ArticleLayout from "../../layouts/ArticleLayout.astro";
+
+export async function getStaticPaths() {
+  const creditsEntries = await getCollection("credits", ({ data }) => !data.isDraft);
+  const paths = await Promise.all(
+    creditsEntries.map(async (credits) => {
+      const issue = await getEntry(credits.data.issue);
+      if (!issue || issue.data.isDraft) return null;
+      return {
+        params: { issue: issue.id },
+        props: { credits, issue },
+      };
+    }),
+  );
+  return paths.filter((path) => path !== null);
+}
+
+const { credits, issue } = Astro.props;
+const { Content } = await render(credits);
+---
+
+<ArticleLayout
+  title={credits.data.title}
+  issueTitle={issue.data.title}
+  issueHref={`/${issue.id}`}
+>
+  <div class="credits-content">
+    <Content />
+  </div>
+</ArticleLayout>
